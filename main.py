@@ -2,7 +2,8 @@ import streamlit as st
 import plotly.express as px
 import json
 import pandas as pd
-import gdown
+import os
+import pickle
 
 
 st.set_page_config(layout="wide")
@@ -19,19 +20,35 @@ for feature in geojson_data.get('features', []):
     feature['properties']['Nueva_Zona'] = int(feature['properties']['Nueva_Zona'])
 
 
-def load_data():
-    try:
-        file_id = '1XqQO82n36aoyY4cd7h6Lawjn--vd9YZf'
-        url = f'https://drive.google.com/uc?export=download&id={file_id}'
-        output = 'odmatrix_lab.csv'
-        
-        gdown.download(url, output, quiet=False)
-        
-        df = pd.read_csv(output, delimiter='|')
-        return df
-    except Exception as e:
-        st.error(f"Ha ocurrido un error: {e}")
-        return None
+
+def crear_df():
+    # Ruta de la carpeta donde están los archivos CSV
+    csv_folder = 'csv'
+
+    # Lista de nombres de archivos CSV
+    csv_files = ['Grupo_00.csv', 'Grupo_01.csv', 'Grupo_02.csv', 'Grupo_03.csv']
+
+    # Leer y combinar todos los archivos CSV en un solo DataFrame
+    dataframes = []
+    for file in csv_files:
+        file_path = os.path.join(csv_folder, file)
+        df = pd.read_csv(file_path, index_col="Unnamed: 0")
+        dataframes.append(df)
+    return dataframes
+
+#def load_data():
+#    try:
+#        file_id = '1XqQO82n36aoyY4cd7h6Lawjn--vd9YZf'
+#        url = f'https://drive.google.com/uc?export=download&id={file_id}'
+#        output = 'odmatrix_lab.csv'
+#        
+#        gdown.download(url, output, quiet=False)
+#        
+#        df = pd.read_csv(output, delimiter='|')
+#        return df
+#    except Exception as e:
+#        st.error(f"Ha ocurrido un error: {e}")
+#        return None
 
 # Crear un contenedor vacío para el spinner
 spinner_placeholder = st.empty()
@@ -60,7 +77,11 @@ spinner_html = """
 spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
 
 # Cargar los datos
-df = load_data()
+df = pd.concat(crear_df(), ignore_index=True)
+
+# Importar el diccionario desde el archivo binario
+#with open('odmatrix_lab.pkl', 'rb') as handle:
+#    df = pickle.load(handle)
 
 # Una vez que los datos se han cargado, eliminar el spinner
 spinner_placeholder.empty()
